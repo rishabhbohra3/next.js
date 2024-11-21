@@ -51,7 +51,7 @@ describe('Error overlay - RSC build errors', () => {
           await session.patch(pagePath, break2.replace('break 3', '<Hello />'))
 
           await session.patch(pagePath, break2)
-          await session.assertHasRedbox()
+          await session.assertHasRedbox({ pageResponseCode: 500 })
 
           await session.patch(pagePath, break1)
 

@@ -198,7 +198,7 @@ describe.each(['default', 'turbo'])('ReactRefreshLogBox %s', () => {
       ])
     )
     const { session } = sandbox
-    await session.assertHasRedbox()
+    await session.assertHasRedbox({ pageResponseCode: 500 })
 
     const source = await session.getRedboxSource()
     if (process.env.TURBOPACK) {

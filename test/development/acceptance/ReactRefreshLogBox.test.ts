@@ -80,7 +80,7 @@ describe.each(['default', 'turbo'])('ReactRefreshLogBox %s', () => {
       `
     )
 
-    await session.assertHasRedbox()
+    await session.assertHasRedbox({ pageResponseCode: 500 })
     expect(await session.getRedboxSource()).toMatchSnapshot()
   })
 
@@ -644,7 +644,7 @@ describe.each(['default', 'turbo'])('ReactRefreshLogBox %s', () => {
       `
     )
 
-    await session.assertHasRedbox()
+    await session.assertHasRedbox({ pageResponseCode: 500 })
     expect(await session.getRedboxDescription()).toMatchInlineSnapshot(
       `"Error: {"a":1,"b":"x"}"`
     )
@@ -792,7 +792,7 @@ describe.each(['default', 'turbo'])('ReactRefreshLogBox %s', () => {
       ])
     )
     const { session, browser } = sandbox
-    await session.assertHasRedbox()
+    await session.assertHasRedbox({ pageResponseCode: 500 })
     let callStackFrames = await browser.elementsByCss(
       '[data-nextjs-call-stack-frame]'
     )
@@ -820,7 +820,7 @@ describe.each(['default', 'turbo'])('ReactRefreshLogBox %s', () => {
       ])
     )
     const { session, browser } = sandbox
-    await session.assertHasRedbox()
+    await session.assertHasRedbox({ pageResponseCode: 500 })
 
     // Should still show the errored line in source code
     const source = await session.getRedboxSource()

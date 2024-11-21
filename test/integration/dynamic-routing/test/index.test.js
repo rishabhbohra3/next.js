@@ -1200,7 +1200,7 @@ function runTests({ dev }) {
         await browser
           .elementByCss('#view-post-1-interpolated-incorrectly')
           .click()
-        await assertHasRedbox(browser)
+        await assertHasRedbox(browser, { pageResponseCode: 500 })
         const header = await getRedboxHeader(browser)
         expect(header).toContain(
           'The provided `href` (/[name]?another=value) value is missing query values (name) to be interpolated properly.'

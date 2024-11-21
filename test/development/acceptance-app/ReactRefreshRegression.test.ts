@@ -295,7 +295,7 @@ describe('ReactRefreshRegression app', () => {
       `export default function Page() { throw new Error('boom'); }`
     )
 
-    await session.assertHasRedbox()
+    await session.assertHasRedbox({ pageResponseCode: 500 })
 
     const source = await session.getRedboxSource()
     expect(source.split(/\r?\n/g).slice(2).join('\n')).toMatchInlineSnapshot(`
@@ -316,7 +316,7 @@ describe('ReactRefreshRegression app', () => {
       `
     )
 
-    await session.assertHasRedbox()
+    await session.assertHasRedbox({ pageResponseCode: 500 })
 
     const source = await session.getRedboxSource()
     expect(source.split(/\r?\n/g).slice(2).join('\n')).toMatchInlineSnapshot(`

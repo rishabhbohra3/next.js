@@ -49,7 +49,7 @@ const showsError = async (pathname, regex, click = false, isWarn = false) => {
         return warnLogs.join('\n')
       }, regex)
     } else {
-      await assertHasRedbox(browser)
+      await assertHasRedbox(browser, { pageResponseCode: 500 })
       const errorContent = await getRedboxHeader(browser)
       expect(errorContent).toMatch(regex)
     }

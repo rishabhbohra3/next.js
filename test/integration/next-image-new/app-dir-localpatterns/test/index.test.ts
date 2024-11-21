@@ -55,7 +55,7 @@ function runTests(mode: 'dev' | 'server') {
     const page = '/' + id
     const browser = await webdriver(appPort, page)
     if (mode === 'dev') {
-      await assertHasRedbox(browser)
+      await assertHasRedbox(browser, { pageResponseCode: 500 })
       expect(await getRedboxHeader(browser)).toMatch(
         /Invalid src prop (.+) on `next\/image` does not match `images.localPatterns` configured/g
       )
