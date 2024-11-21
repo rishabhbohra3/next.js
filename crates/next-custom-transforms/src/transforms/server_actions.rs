@@ -67,7 +67,13 @@ enum ServerActionsErrorKind {
         span: Span,
         directive: Directive,
     },
+    InlineUseCacheInClassInstanceMethod {
+        span: Span,
+    },
     InlineUseCacheInClientComponent {
+        span: Span,
+    },
+    InlineUseServerInClassInstanceMethod {
         span: Span,
     },
     InlineUseServerInClientComponent {
@@ -1270,6 +1276,68 @@ impl<C: Comments> VisitMut for ServerActions<C> {
         n.visit_mut_children_with(self);
         self.arrow_or_fn_expr_ident = old_arrow_or_fn_expr_ident;
         self.in_exported_expr = old_in_exported_expr;
+    }
+
+    fn visit_mut_class_member(&mut self, n: &mut ClassMember) {
+        if let ClassMember::Method(ClassMethod {
+            is_abstract: false,
+            is_static: true,
+            kind: MethodKind::Method,
+            key,
+            span,
+            accessibility: None | Some(Accessibility::Public),
+            ..
+        }) = n
+        {
+            let key = key.clone();
+            let span = *span;
+            let old_arrow_or_fn_expr_ident = self.arrow_or_fn_expr_ident.clone();
+
+            if let PropName::Ident(ident_name) = &key {
+                self.arrow_or_fn_expr_ident = Some(ident_name.clone().into());
+            }
+
+            let old_this_status = self.this_status.clone();
+            self.this_status = ThisStatus::Allowed;
+            self.rewrite_expr_to_proxy_expr = None;
+            self.in_exported_expr = false;
+            n.visit_mut_children_with(self);
+            self.this_status = old_this_status;
+            self.arrow_or_fn_expr_ident = old_arrow_or_fn_expr_ident;
+
+            if let Some(expr) = &self.rewrite_expr_to_proxy_expr {
+                *n = ClassMember::ClassProp(ClassProp {
+                    span,
+                    key,
+                    value: Some(expr.clone()),
+                    is_static: true,
+                    ..Default::default()
+                });
+                self.rewrite_expr_to_proxy_expr = None;
+            }
+        } else {
+            n.visit_mut_children_with(self);
+        }
+    }
+
+    fn visit_mut_class_method(&mut self, n: &mut ClassMethod) {
+        if n.is_static {
+            n.visit_mut_children_with(self);
+        } else {
+            let (is_action_fn, is_cache_fn) = has_body_directive(&n.function.body);
+
+            if is_action_fn {
+                emit_error(
+                    ServerActionsErrorKind::InlineUseServerInClassInstanceMethod { span: n.span },
+                );
+            }
+
+            if is_cache_fn {
+                emit_error(
+                    ServerActionsErrorKind::InlineUseCacheInClassInstanceMethod { span: n.span },
+                );
+            }
+        }
     }
 
     fn visit_mut_call_expr(&mut self, n: &mut CallExpr) {
@@ -2863,12 +2931,30 @@ fn emit_error(error_kind: ServerActionsErrorKind) {
                 }
             },
         ),
+        ServerActionsErrorKind::InlineUseCacheInClassInstanceMethod { span } => (
+            span,
+            formatdoc! {
+                r#"
+                    It is not allowed to define inline "use cache" annotated class instance methods.
+                    To define cached functions, use functions, object method properties, or static class methods instead.
+                "#
+            },
+        ),
         ServerActionsErrorKind::InlineUseCacheInClientComponent { span } => (
             span,
             formatdoc! {
                 r#"
                     It is not allowed to define inline "use cache" annotated functions in Client Components.
                     To use "use cache" functions in a Client Component, you can either export them from a separate file with "use cache" or "use server" at the top, or pass them down through props from a Server Component.
+                "#
+            },
+        ),
+        ServerActionsErrorKind::InlineUseServerInClassInstanceMethod { span } => (
+            span,
+            formatdoc! {
+                r#"
+                    It is not allowed to define inline "use server" annotated class instance methods.
+                    To define Server Actions, use functions, object method properties, or static class methods instead.
                 "#
             },
         ),
