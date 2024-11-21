@@ -2158,6 +2158,16 @@ impl<C: Comments> VisitMut for ServerActions<C> {
         }
     }
 
+    fn visit_mut_super(&mut self, n: &mut Super) {
+        if let ThisStatus::Forbidden { directive } = &self.this_status {
+            emit_error(ServerActionsErrorKind::ForbiddenExpression {
+                span: n.span,
+                expr: "super".into(),
+                directive: directive.clone(),
+            });
+        }
+    }
+
     fn visit_mut_ident(&mut self, n: &mut Ident) {
         if n.sym == *"arguments" {
             if let ThisStatus::Forbidden { directive } = &self.this_status {
@@ -2758,6 +2768,35 @@ impl ClosureReplacer<'_> {
 }
 
 impl VisitMut for ClosureReplacer<'_> {
+    fn visit_mut_stmt(&mut self, stmt: &mut Stmt) {
+        stmt.visit_mut_children_with(self);
+
+        // Replace super calls in hoisted static class methods with empty
+        // statements so that we can remove them later to ensure that the
+        // resulting JS is still valid. Before this, we have already emitted an
+        // error for the super call.
+        if let Stmt::Expr(ExprStmt {
+            expr:
+                box Expr::Call(CallExpr {
+                    callee: Callee::Expr(box Expr::SuperProp(SuperPropExpr { .. })),
+                    ..
+                }),
+            ..
+        }) = stmt
+        {
+            stmt.take();
+        }
+    }
+
+    fn visit_mut_stmts(&mut self, stmts: &mut Vec<Stmt>) {
+        stmts.visit_mut_children_with(self);
+
+        stmts.retain(|stmt| {
+            // Remove empty statements.
+            !matches!(stmt, Stmt::Empty(..))
+        });
+    }
+
     fn visit_mut_expr(&mut self, e: &mut Expr) {
         e.visit_mut_children_with(self);
 
