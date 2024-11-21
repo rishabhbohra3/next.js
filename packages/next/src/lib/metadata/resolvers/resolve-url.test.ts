@@ -128,7 +128,7 @@ describe('getSocialImageFallbackMetadataBase', () => {
   describe('fallbackMetadataBase when metadataBase is not present', () => {
     let originalEnv: NodeJS.ProcessEnv
     function getSocialImageFallbackMetadataBaseHelper(): string {
-      return getSocialImageFallbackMetadataBase(null).fallbackMetadataBase.href
+      return getSocialImageFallbackMetadataBase(null).href
     }
 
     beforeEach(() => {

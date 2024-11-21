@@ -96,13 +96,13 @@ export function resolveImages(
   const resolvedImages = resolveAsArrayOrUndefined(images)
   if (!resolvedImages) return resolvedImages
 
-  const { isMetadataBaseMissing, fallbackMetadataBase } =
-    getSocialImageFallbackMetadataBase(metadataBase)
+  const fallbackMetadataBase = getSocialImageFallbackMetadataBase(metadataBase)
+  const isMetadataBaseMissing = !metadataBase
   const nonNullableImages = []
   for (const item of resolvedImages) {
     const resolvedItem = resolveAndValidateImage(
       item,
-      fallbackMetadataBase,
+      metadataBase ?? fallbackMetadataBase,
       isMetadataBaseMissing,
       isStandaloneMode
     )
