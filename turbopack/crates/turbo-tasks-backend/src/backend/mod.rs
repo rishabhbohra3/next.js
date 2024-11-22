@@ -782,6 +782,12 @@ impl<B: BackingStorage> TurboTasksBackendInner<B> {
         self.stopping_event.notify(usize::MAX);
     }
 
+    fn stop(&self) {
+        if let Err(err) = self.backing_storage.shutdown() {
+            println!("Shutting down failed: {}", err);
+        }
+    }
+
     fn idle_start(&self) {
         self.idle_start_event.notify(usize::MAX);
     }
@@ -1809,6 +1815,10 @@ impl<B: BackingStorage> Backend for TurboTasksBackend<B> {
 
     fn stopping(&self, _turbo_tasks: &dyn TurboTasksBackendApi<Self>) {
         self.0.stopping();
+    }
+
+    fn stop(&self, _turbo_tasks: &dyn TurboTasksBackendApi<Self>) {
+        self.0.stop();
     }
 
     fn idle_start(&self, _turbo_tasks: &dyn TurboTasksBackendApi<Self>) {
